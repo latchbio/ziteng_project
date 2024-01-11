@@ -3,33 +3,50 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
+from promise import Promise
 from task import Task, TaskStatus
 
 
 root_path = Path(__file__).parent
 
 
-class orchestrator:
+class Orchestrator:
     def __init__(self) -> None:
         self.tasks: dict[str, Task] = {}
         self.edges: dict[str, list[str]] = defaultdict(list)
         self.rev_edges: dict[str, list[str]] = defaultdict(list)
 
 
+
     # add it to the orchestrator
-    def add_task(self, task_id: str, path: str):
+    def add_task(self, task_id: str, path: str, launch_id: str = None):
         task = Task(task_id, path)
 
         self.tasks[task_id] = task
 
+        if launch_id is not None:
+            self.tasks[launch_id].increase_task()
+            self.check_promises(launch_id)
 
 
-    def add_edge(self, from_id: str, to_id: str):
+
+    def add_edge(self, from_id: str, to_id: str, launch_id: str = None):
         self.edges[from_id].append(to_id)
         self.rev_edges[to_id].append(from_id)
 
+        if launch_id is not None:
+            self.tasks[launch_id].increase_edge()
+            self.check_promises(launch_id)
+
 
     
+    def add_promise(self, group: list[str], promise: Promise):
+        for task_id in group:
+            self.tasks[task_id].add_promise(promise)
+            self.check_promises(task_id)
+
+
+
     def init_status(self):
         for task_id in self.tasks:
             t = self.tasks[task_id]
@@ -63,6 +80,11 @@ class orchestrator:
         
         if ready:
             t.status = TaskStatus.READY
+
+
+
+    def check_promises(self, task_id) -> bool:
+        return self.tasks[task_id].check_promises()
 
 
 
@@ -114,9 +136,9 @@ class orchestrator:
         for raw_msg in stdout:
             msg = json.loads(raw_msg.decode())
             if msg['type'] == "add_task":
-                self.add_task(msg['task_id'], msg['path'])
+                self.add_task(msg['task_id'], msg['path'], )
             if msg['type'] == "add_edge":
-                self.add_edge(msg['from'], msg['to'])
+                self.add_edge(msg['from_id'], msg['to_id'])
         
         t.status = TaskStatus.SUCCESS
 
@@ -125,3 +147,7 @@ class orchestrator:
     # resume from checkpoint
     def warm_start(self):
         return
+    
+
+
+orchestrator = Orchestrator()
