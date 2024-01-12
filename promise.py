@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import IntEnum
 
 STATIC = 0
 DYNAMIC = 10
 LIMITED_DYNAMIC = 5
 
-class Promise(Enum):
+class Promise(IntEnum):
     STATIC = 0
     DYNAMIC = 1
     NO_NEW_TASK = 2

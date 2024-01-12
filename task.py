@@ -1,12 +1,13 @@
 from enum import Enum
 from promise import *
 
+# for status and graph display
 class TaskStatus(Enum):
-    CREATED = 0
-    READY = 1
-    RUNNING = 2
-    SUCCESS = 3
-    FAILED = 4
+    CREATED = "grey"
+    READY = "deepskyblue"
+    RUNNING = "orange"
+    SUCCESS = "green"
+    FAILED = "red"
 
 
 class TaskType(Enum):
@@ -66,7 +67,11 @@ class Task:
 
     
     def check_promises(self) -> bool:
-        if self.cur_edge > self.promise_edge or self.cur_task > self.promise_task:
+        if self.cur_task > self.promise_task:
+            print(f"Promise Violated:\n promised tasks: {self.promise_task}, current edges: {self.cur_task}")
+            return False
+        elif self.cur_edge > self.promise_edge:
+            print(f"Promise Violated:\n promised edges: {self.promise_edge}, current edges: {self.cur_edge}")
             return False
         return True
 

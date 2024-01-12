@@ -17,7 +17,7 @@ def add_edge(from_id: str, to_id: str, launch_id: str):
         "launch_id": launch_id
     }))
 
-def add_promise(task_id: str, promise: Promise):
+def add_promise(task_id: list[str], promise: Promise):
     print(json.dumps({
         "type": "add_promise",
         "task_id": task_id,

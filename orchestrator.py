@@ -1,10 +1,12 @@
 import asyncio
+import graphviz
 import json
 import sys
+import tempfile
 from collections import defaultdict
 from pathlib import Path
 from promise import Promise
-from task import Task, TaskStatus
+from task import Task, TaskStatus, TaskType
 
 
 root_path = Path(__file__).parent
@@ -40,10 +42,17 @@ class Orchestrator:
 
 
     
-    def add_promise(self, group: list[str], promise: Promise):
+    def add_promise(self, group, promise):
         for task_id in group:
             self.tasks[task_id].add_promise(promise)
             self.check_promises(task_id)
+
+    
+    
+    def check_promises(self, task_id):
+        if not self.tasks[task_id].check_promises():
+            # raise error
+            exit(1)
 
 
 
@@ -82,15 +91,38 @@ class Orchestrator:
             t.status = TaskStatus.READY
 
 
+    def graph_display(self, name: str):
+        graph = graphviz.Digraph(name)
+        
+        for task in self.tasks:
+            graph.node(task, style="filled", color=self.tasks[task].status.value)
+            if self.tasks[task].type == TaskType.DYNAMIC:
+                graph.node(task, fillcolor=self.tasks[task].status.value, xlabel="dynamic")
 
-    def check_promises(self, task_id) -> bool:
-        return self.tasks[task_id].check_promises()
+            for to in self.edges[task]:
+                graph.edge(task, to)
+        
+        graph.render(directory="./graph/", view=True)
 
+
+    def dynamic_display(self):
+        graph = graphviz.Digraph()
+        
+        for task in self.tasks:
+            graph.node(task, style="filled", color=self.tasks[task].status.value)
+            if self.tasks[task].type == TaskType.DYNAMIC:
+                graph.node(task, fillcolor=self.tasks[task].status.value, xlabel="dynamic")
+
+            for to in self.edges[task]:
+                graph.edge(task, to)
+
+        graph.view(tempfile.mktemp('.gv'))
 
 
     # cold start
     async def cold_start(self):
         self.init_status()
+        self.graph_display("Workflow Start")
 
         while True:
             find = False
@@ -99,7 +131,7 @@ class Orchestrator:
                 t = self.tasks[task_id]
 
                 if t.status == TaskStatus.READY:
-                    await self.execute(t)
+                    await self.execute(task_id)
 
                     find = True
 
@@ -110,6 +142,7 @@ class Orchestrator:
             
             if not find:
                 print("finished!")
+                self.graph_display("Workflow Finished")
                 break
 
 
@@ -118,29 +151,31 @@ class Orchestrator:
         t = self.tasks[task_id]
 
         proc = await asyncio.create_subprocess_exec(
-            [
-                sys.executable,
-                root_path + t.path, 
-                task_id
-            ], 
+            sys.executable,
+            t.path,
+            task_id, 
             env={"PYTHONPATH": root_path},
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE
         )
 
         stdout, stderr = await proc.communicate()
 
-        if proc.wait() != 0:
+        if await proc.wait() != 0:
             t.status = TaskStatus.FAILED
         
         for raw_msg in stdout:
+            # print(raw_msg)
             msg = json.loads(raw_msg.decode())
             if msg['type'] == "add_task":
-                self.add_task(msg['task_id'], msg['path'], )
+                self.add_task(msg['task_id'], msg['path'], task_id)
             if msg['type'] == "add_edge":
-                self.add_edge(msg['from_id'], msg['to_id'])
+                self.add_edge(msg['from_id'], msg['to_id'], task_id)
+            if msg['type'] == "add_promise":
+                self.add_promise(msg['group'], msg['promise'])
         
         t.status = TaskStatus.SUCCESS
+        # self.dynamic_display()
 
 
 
