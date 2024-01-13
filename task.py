@@ -3,23 +3,26 @@ from promise import *
 
 # for status and graph display
 class TaskStatus(Enum):
-    CREATED = "grey"
-    READY = "deepskyblue"
+    CREATED = "lightcyan"
+    READY = "skyblue"
     RUNNING = "orange"
-    SUCCESS = "green"
-    FAILED = "red"
+    SUCCESS = "palegreen"
+    FAILED = "firebrick1"
 
 
 class TaskType(Enum):
     STATIC = 0
-    DYNAMIC = 1
+    BRANCH = 1
+    MAP_TASK = 2
 
 
 class Task:
-    def __init__(self, id: str, path: str):
+    def __init__(self, id: str, path: str, input):
         self.id = id
         self.path = path
         self.status = TaskStatus.CREATED
+        self.inputs = [input] if input is not None else []
+        self.output = None
 
         self.type = TaskType.STATIC
         self.promise_task = STATIC
@@ -34,10 +37,15 @@ class Task:
             self.promise_task = STATIC
             self.promise_edge = STATIC
 
-        elif promise == Promise.DYNAMIC:
-            self.type = TaskType.DYNAMIC
-            self.promise_task = DYNAMIC
-            self.promise_edge = DYNAMIC
+        elif promise == Promise.BRANCH:
+            self.type = TaskType.BRANCH
+            self.promise_task = LIMITED_DYNAMIC
+            self.promise_edge = LIMITED_DYNAMIC
+        
+        elif promise == Promise.MAP_TASK:
+            self.type = TaskType.MAP_TASK
+            self.promise_task = FULLY_DYNAMIC
+            self.promise_edge = FULLY_DYNAMIC
 
         elif promise == Promise.NO_NEW_TASK:
             self.promise_task = STATIC
@@ -46,25 +54,24 @@ class Task:
             self.promise_task = STATIC
         
         elif promise == Promise.LIMITED_NEW_TASK:
-            self.type = TaskType.DYNAMIC
             self.promise_task = LIMITED_DYNAMIC
         
         elif promise == Promise.LIMITED_NEW_EDGE:
-            self.type = TaskType.DYNAMIC
             self.promise_edge = LIMITED_DYNAMIC
         
 
-        if self.type == TaskType.DYNAMIC and self.promise_task == STATIC and self.promise_edge == STATIC:
+        if self.type != TaskType.STATIC and self.promise_task == STATIC and self.promise_edge == STATIC:
             self.type = TaskType.STATIC
 
 
     def increase_task(self):
         self.cur_task += 1
-
     
     def increase_edge(self):
         self.cur_edge += 1
 
+    def decrease_edge(self):
+        self.cur_edge -= 1
     
     def check_promises(self) -> bool:
         if self.cur_task > self.promise_task:
@@ -77,9 +84,9 @@ class Task:
 
 
 
-class TaskOutput:
-    def __init__(self, task_id: str):
-        self.id = task_id
-        # json -> string
-        self.data = None
+# class TaskOutput:
+#     def __init__(self, task_id: str):
+#         self.id = task_id
+#         # json -> string
+#         self.data = None
 
