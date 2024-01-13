@@ -16,8 +16,14 @@ def add_edge(from_id: str, to_id: str):
         "to_id": to_id
     }))
 
+def remove_task(task_id: str):
+    print(json.dumps({
+        "type": "remove_task",
+        "task_id": task_id
+    }))
+
 def remove_edge(from_id: str, to_id: str):
-        print(json.dumps({
+    print(json.dumps({
         "type": "remove_edge",
         "from_id": from_id,
         "to_id": to_id

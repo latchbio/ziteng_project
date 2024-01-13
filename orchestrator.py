@@ -4,8 +4,8 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
-from promise import Promise
-from task import Task, TaskStatus, TaskType
+from promise import *
+from task import Task, TaskStatus
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -37,23 +37,36 @@ class Orchestrator:
     def add_edge(self, from_id: str, to_id: str, launch_id: str=None):
         self.edges[from_id].append(to_id)
         self.rev_edges[to_id].append(from_id)
+        self.tasks[from_id].next_edges += 1
+        self.check_promises(from_id)
 
         if launch_id is not None:
             self.tasks[launch_id].increase_edge()
             self.check_promises(launch_id)
 
-    
-    
+
+
+    def remove_task(self, task_id: str):
+        for to in self.edges[task_id]:
+            self.remove_edge(task_id, to)
+        for from_id in self.rev_edges[task_id]:
+            self.remove_edge(from_id, task_id)
+        self.tasks.pop(task_id)
+
+
+
     def remove_edge(self, from_id: str, to_id: str, launch_id: str=None):
         self.edges[from_id].remove(to_id)
         self.rev_edges[to_id].remove(from_id)
+        self.tasks[from_id].next_edges -= 1
+        self.check_promises(from_id)
 
         if launch_id is not None:
             self.tasks[launch_id].decrease_edge()
             self.check_promises(launch_id)
 
 
-    
+
     def add_promise(self, group: list[str], promise: Promise):
         if isinstance(group, list):
             for task_id in group:
@@ -63,14 +76,14 @@ class Orchestrator:
             self.tasks[group].add_promise(promise)
             self.check_promises(group)
 
-    
+
 
     def gen_output(self, task_id: str, output):
         t = self.tasks[task_id]
         t.output = output
 
-    
-    
+
+
     def check_promises(self, task_id):
         if not self.tasks[task_id].check_promises():
             # raise error
@@ -119,14 +132,16 @@ class Orchestrator:
             t.status = TaskStatus.READY
 
 
+
     def graph_display(self, name: str):
         graph = graphviz.Digraph(name)
         
         for task in self.tasks:
-            graph.node(task, fillcolor=self.tasks[task].status.value)
+            t = self.tasks[task]
+            graph.node(task, fillcolor=t.status.value)
             branch = False
             map = False
-            if self.tasks[task].type == TaskType.BRANCH and self.tasks[task].status != TaskStatus.SUCCESS:
+            if t.promise_edge == 1 and t.next_edges > 1 and self.tasks[task].status != TaskStatus.SUCCESS:
                 branch = True
                 graph.node(task, shape="diamond", fillcolor=self.tasks[task].status.value, xlabel="branch")
                 graph.node(task+"Branch1", shape="egg", fillcolor="grey")
@@ -135,7 +150,7 @@ class Orchestrator:
                 graph.edge(task, task+"Branch2")
 
             
-            elif self.tasks[task].type == TaskType.MAP_TASK and self.tasks[task].status != TaskStatus.SUCCESS:
+            elif t.promise_new_task > STATIC and self.tasks[task].status != TaskStatus.SUCCESS:
                 map = True
                 graph.node(task, shape="octagon", fillcolor=self.tasks[task].status.value, xlabel="map task")
                 graph.node(task+"Map Tasks", shape="box3d", fillcolor="grey")
@@ -153,26 +168,28 @@ class Orchestrator:
         graph.render(directory="./graph/", view=True)
 
 
+
     def dynamic_display(self):
         graph = graphviz.Digraph()
 
         for task in self.tasks:
-            graph.node(task, style="filled", color=self.tasks[task].status.value)
+            t = self.tasks[task]
+            graph.node(task, fillcolor=t.status.value)
             branch = False
             map = False
-            if self.tasks[task].type == TaskType.BRANCH and self.tasks[task].status != TaskStatus.SUCCESS:
+            if t.promise_edge == 1 and t.next_edges > 1 and self.tasks[task].status != TaskStatus.SUCCESS:
                 branch = True
                 graph.node(task, shape="diamond", fillcolor=self.tasks[task].status.value, xlabel="branch")
-                graph.node(task+"Branch1", shape="plain", fillcolor="grey", label="Branch1")
+                graph.node(task+"Branch1", shape="egg", fillcolor="grey")
                 graph.edge(task, task+"Branch1")
-                graph.node(task+"Branch2", shape="plain", fillcolor="grey", label="Branch2")
+                graph.node(task+"Branch2", shape="egg", fillcolor="grey")
                 graph.edge(task, task+"Branch2")
 
             
-            elif self.tasks[task].type == TaskType.MAP_TASK and self.tasks[task].status != TaskStatus.SUCCESS:
+            elif t.promise_new_task > STATIC and self.tasks[task].status != TaskStatus.SUCCESS:
                 map = True
-                graph.node(task, shape="invhouse", fillcolor=self.tasks[task].status.value, xlabel="map task")
-                graph.node(task+"Map Tasks", shape="box3d", fillcolor="grey", label="Map Tasks")
+                graph.node(task, shape="octagon", fillcolor=self.tasks[task].status.value, xlabel="map task")
+                graph.node(task+"Map Tasks", shape="box3d", fillcolor="grey")
                 graph.edge(task, task+"Map Tasks")
 
             for to in self.edges[task]:
@@ -261,6 +278,8 @@ class Orchestrator:
             t.status = TaskStatus.FAILED
         
         t.status = TaskStatus.SUCCESS
+
+        self.check_promises(task_id)
 
 
 
