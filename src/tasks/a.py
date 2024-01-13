@@ -1,4 +1,4 @@
-import api
+import api.api as api
 import json
 import random
 import sys

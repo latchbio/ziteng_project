@@ -4,8 +4,8 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
-from promise import *
-from task import Task, TaskStatus
+from src.entity.promise import *
+from src.entity.task import Task, TaskStatus
 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -160,7 +160,7 @@ class Orchestrator:
                 else:
                     graph.edge(task, to)
         
-        graph.render(directory="./graph/", view=True)
+        graph.render(directory="./output/", view=True)
 
 
 
@@ -186,9 +186,10 @@ class Orchestrator:
                 else:
                     graph.edge(task, to)
 
-        graph.render(directory="./graph/", filename=f"{self.iter}.gv", format="png")
+        graph.render(directory="./output/", filename=f"{self.iter}.gv", format="png")
 
-        plt.imshow(mpimg.imread(f"./graph/{self.iter}.gv.png"))
+        plt.figure(figsize = (12,4))
+        plt.imshow(mpimg.imread(f"./output/{self.iter}.gv.png"))
         plt.show()
 
 

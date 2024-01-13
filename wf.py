@@ -1,7 +1,7 @@
-import utils
+import src.util.utils as utils
 import asyncio
-from orchestrator import orchestrator
-from promise import Promise
+from src.orchestrator import orchestrator
+from src.entity.promise import Promise
 
 
 #       / d
@@ -20,12 +20,12 @@ async def main():
     task_e1 = utils.generate_task_id("e")
     task_e2 = utils.generate_task_id("e")
 
-    orchestrator.add_task(task_a, "tasks/a.py", input=5)
-    orchestrator.add_task(task_b, "tasks/b.py")
-    orchestrator.add_task(task_d, "tasks/d.py")
-    orchestrator.add_task(task_e1, "tasks/e.py")
-    orchestrator.add_task(task_c, "tasks/c.py")
-    orchestrator.add_task(task_e2, "tasks/e.py")
+    orchestrator.add_task(task_a, "src/tasks/a.py", input=4)
+    orchestrator.add_task(task_b, "src/tasks/b.py")
+    orchestrator.add_task(task_d, "src/tasks/d.py")
+    orchestrator.add_task(task_e1, "src/tasks/e.py")
+    orchestrator.add_task(task_c, "src/tasks/c.py")
+    orchestrator.add_task(task_e2, "src/tasks/e.py")
 
     orchestrator.add_edge(task_a, task_b)
     orchestrator.add_edge(task_a, task_c)

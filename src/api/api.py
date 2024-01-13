@@ -1,5 +1,4 @@
 import json
-from promise import Promise
 
 def add_task(task_id: str, path: str, input=None):
     print(json.dumps({
@@ -29,7 +28,7 @@ def remove_edge(from_id: str, to_id: str):
         "to_id": to_id
     }))
 
-def add_promise(group: list[str], promise: Promise):
+def add_promise(group: list[str], promise):
     print(json.dumps({
         "type": "add_promise",
         "group": group,

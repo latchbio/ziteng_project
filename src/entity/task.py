@@ -1,5 +1,5 @@
 from enum import Enum
-from promise import *
+from src.entity.promise import *
 
 # for status and graph display
 class TaskStatus(Enum):

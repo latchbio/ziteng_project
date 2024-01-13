@@ -1,7 +1,7 @@
-import api
+import api.api as api
 import json
 import sys
-import utils
+import util.utils as utils
 
 cur_task = json.loads(sys.argv[1])[0]
 inputs = json.loads(sys.argv[2])
@@ -12,7 +12,7 @@ next_tasks = json.loads(sys.argv[1])[1]
 
 for i in range(0, indicator):
     task_d = utils.generate_task_id("d")
-    api.add_task(task_d, "tasks/d.py", [i])
+    api.add_task(task_d, "src/tasks/d.py", [i])
     api.add_edge(cur_task, task_d)
     for next in next_tasks:
         api.add_edge(task_d, next)
