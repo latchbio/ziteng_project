@@ -138,21 +138,16 @@ class Orchestrator:
         
         for task in self.tasks:
             t = self.tasks[task]
-            graph.node(task, fillcolor=t.status.value)
+            graph.node(task, style="filled", color=t.status.value)
             branch = False
             map = False
             if t.promise_edge == 1 and t.next_edges > 1 and self.tasks[task].status != TaskStatus.SUCCESS:
                 branch = True
                 graph.node(task, shape="diamond", fillcolor=self.tasks[task].status.value, xlabel="branch")
-                graph.node(task+"Branch1", shape="egg", fillcolor="grey")
-                graph.edge(task, task+"Branch1")
-                graph.node(task+"Branch2", shape="egg", fillcolor="grey")
-                graph.edge(task, task+"Branch2")
-
             
             elif t.promise_new_task > STATIC and self.tasks[task].status != TaskStatus.SUCCESS:
                 map = True
-                graph.node(task, shape="octagon", fillcolor=self.tasks[task].status.value, xlabel="map task")
+                graph.node(task, fillcolor=self.tasks[task].status.value, xlabel="map task")
                 graph.node(task+"Map Tasks", shape="box3d", fillcolor="grey")
                 graph.edge(task, task+"Map Tasks")
 
@@ -174,29 +169,19 @@ class Orchestrator:
 
         for task in self.tasks:
             t = self.tasks[task]
-            graph.node(task, fillcolor=t.status.value)
-            branch = False
+            graph.node(task, style="filled", color=t.status.value)
             map = False
             if t.promise_edge == 1 and t.next_edges > 1 and self.tasks[task].status != TaskStatus.SUCCESS:
-                branch = True
                 graph.node(task, shape="diamond", fillcolor=self.tasks[task].status.value, xlabel="branch")
-                graph.node(task+"Branch1", shape="egg", fillcolor="grey")
-                graph.edge(task, task+"Branch1")
-                graph.node(task+"Branch2", shape="egg", fillcolor="grey")
-                graph.edge(task, task+"Branch2")
-
             
             elif t.promise_new_task > STATIC and self.tasks[task].status != TaskStatus.SUCCESS:
                 map = True
-                graph.node(task, shape="octagon", fillcolor=self.tasks[task].status.value, xlabel="map task")
+                graph.node(task, fillcolor=self.tasks[task].status.value, xlabel="map task")
                 graph.node(task+"Map Tasks", shape="box3d", fillcolor="grey")
                 graph.edge(task, task+"Map Tasks")
 
             for to in self.edges[task]:
-                if branch:
-                    graph.edge(task+"Branch1", to)
-                    graph.edge(task+"Branch1", to)
-                elif map:
+                if map:
                     graph.edge(task+"Map Tasks", to)
                 else:
                     graph.edge(task, to)
@@ -210,7 +195,6 @@ class Orchestrator:
     # cold start
     async def cold_start(self):
         self.init_status()
-        # self.graph_display("Workflow Start")
 
         while True:
             find = False
@@ -232,7 +216,6 @@ class Orchestrator:
             
             if not find:
                 print("finished!")
-                # self.graph_display("Workflow Finished")
                 break
 
             self.iter += 1
@@ -266,6 +249,8 @@ class Orchestrator:
                 self.add_task(msg['task_id'], msg['path'], msg['input'], task_id)
             elif msg['type'] == "add_edge":
                 self.add_edge(msg['from_id'], msg['to_id'], task_id)
+            elif msg['type'] == "remove_task":
+                self.remove_task(msg['task_id'])
             elif msg['type'] == "remove_edge":
                 self.remove_edge(msg['from_id'], msg['to_id'], task_id)
             elif msg['type'] == "add_promise":

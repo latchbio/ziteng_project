@@ -12,4 +12,4 @@ class Promise(IntEnum):
     LIMITED_NEW_EDGE = 5
     FULL_NEW_TASK = 6
     FULL_NEW_EDGE = 7
-    KEEP_ONE_EDGE = 8
+    KEEP_ONE_EDGE_RUNTIME = 8

@@ -12,4 +12,4 @@ next_tasks = json.loads(sys.argv[1])[1]
 if indicator % 2 == 0:
     api.remove_task(next_tasks[0])
 else:
-    api.remove_task(next_tasks[0])
+    api.remove_task(next_tasks[1])

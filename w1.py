@@ -34,7 +34,7 @@ async def main():
     orchestrator.add_edge(task_c, task_e2)
 
     orchestrator.add_promise(task_b, Promise.NO_NEW_TASK) # b - A or b - B
-    orchestrator.add_promise(task_b, Promise.KEEP_ONE_EDGE)
+    orchestrator.add_promise(task_b, Promise.KEEP_ONE_EDGE_RUNTIME)
     orchestrator.add_promise(task_c, Promise.FULL_NEW_TASK) # c - M* - e
     orchestrator.add_promise(task_c, Promise.FULL_NEW_EDGE)
 

@@ -49,18 +49,18 @@ class Task:
         elif promise == Promise.FULL_NEW_EDGE:
             self.promise_new_edge = FULLY_DYNAMIC
         
-        elif promise == Promise.KEEP_ONE_EDGE:
+        elif promise == Promise.KEEP_ONE_EDGE_RUNTIME:
             self.promise_edge = 1
 
 
     def increase_task(self):
-        self.new_task += 1
+        self.new_tasks += 1
     
     def increase_edge(self):
-        self.new_edge += 1
+        self.new_edges += 1
 
     def decrease_edge(self):
-        self.new_edge -= 1
+        self.new_edges -= 1
     
     def check_promises(self) -> bool:
         if self.new_tasks > self.promise_new_task:
